@@ -1,7 +1,9 @@
 from dotenv import load_dotenv
 import streamlit as st
 import os
+import pickle
 import google.generativeai as ggi
+import streamlit_authenticator as stauth
 
 # Load environment variables from .env file
 load_dotenv(".env")
@@ -24,15 +26,17 @@ def LLM_Response(question):
     response = chat.send_message(question, stream=True)
     return response
 
-# Set up the Streamlit app interface
-st.title("Legal Assistant")
+# Set up authentication
+names = ["Poorva", "Vishant", "Vidhi"]
+usernames = ["poorva-r", "vishant-m", "vidhi-b"]
+file_path = "hashed_pw.pkl"  # Update this with the path to your hashed password file
+with open(file_path, "rb") as file:
+    hashed_passwords = pickle.load(file)
 
-# Add a sidebar for options
-option = st.sidebar.radio("Select Option", ["Chatbot", "Feature 2", "Feature 3"])
+authenticator = stauth.Authenticate(names, usernames, hashed_passwords, "Legal Assistant", "abcdf", cookie_expiry_days=2)
 
-# If Chatbot option is selected
-if option == "Chatbot":
-
+# Function for the chatbot feature
+def chatbot_feature():
     st.title("Legal Chatbot")
     # Add a text input box for the user to ask a question
     user_quest = st.text_input("Ask a legal query:")
@@ -50,19 +54,42 @@ if option == "Chatbot":
         for word in result:
             st.text(word.text)
 
-#If option Feaure 2 is selected
-elif option == "Feature 2":
-    
+# Function for feature 2
+def feature_2():
     st.title("Feature 2")
     # Add a button to print something
     if st.button("Print"):
         st.write("Printing something...")
 
-
-#If option Feaure 3 is selected
-elif option == "Feature 3":
-    st.title("Feature 2")
+# Function for feature 3
+def feature_3():
+    st.title("Feature 3")
     # Add a button to print something
     if st.button("Print"):
         st.write("Printing something...")
 
+# Main function
+def main():
+    name, authentication_status, username = authenticator.login("Login", "main")
+
+    if authentication_status == False:
+        st.error("Incorrect Username or Password")
+
+    if authentication_status == None:
+        st.warning("Please enter Username and Password")
+
+    if authentication_status:
+        st.sidebar.title(f"Legal Assistant | Welcome {name}")
+        selected_option = st.sidebar.radio("Select Option", ["Chatbot", "Feature 2", "Feature 3"])
+
+        if selected_option == "Chatbot":
+            chatbot_feature()
+
+        elif selected_option == "Feature 2":
+            feature_2()
+
+        elif selected_option == "Feature 3":
+            feature_3()
+
+if __name__ == "__main__":
+    main()
