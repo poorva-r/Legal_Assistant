@@ -2,6 +2,7 @@ from dotenv import load_dotenv
 import streamlit as st
 import os
 import pickle
+import numpy as np
 import google.generativeai as ggi
 import streamlit_authenticator as stauth
 
@@ -29,12 +30,25 @@ model = ggi.GenerativeModel("gemini-pro")
 # Start a chat session with the initialized model
 chat = model.start_chat()
 
-# Function to get a response from the language model
-def LLM_Response(question):
-    # Send the user's question to the chat session and get the response
-    response = chat.send_message(question, stream=True)
-    return response
+# Define the path to the folder containing the models
+models_folder = "models"
 
+# Load the model
+model_path = os.path.join(models_folder, 'model.pkl')
+with open(model_path, 'rb') as model_file:
+    model = pickle.load(model_file)
+
+# Load the label encoder
+encoder_path = os.path.join(models_folder, 'label_encoder.pkl')
+with open(encoder_path, 'rb') as encoder_file:
+    label_encoder = pickle.load(encoder_file)
+
+# Load the CountVectorizer
+vectorizer_path = os.path.join(models_folder, 'vectorizer.pkl')
+with open(vectorizer_path, 'rb') as vectorizer_file:
+    vectorizer = pickle.load(vectorizer_file)
+
+#Chatbot feature
 def chatbot_feature():
     st.title("Legal Chatbot")
 
@@ -70,11 +84,27 @@ def chatbot_feature():
 
 
 # Function for feature 2
-def feature_2():
-    st.title("Feature 2")
-    # Add a button to print something
-    if st.button("Print"):
-        st.write("Printing something...")
+def Classify():
+    st.title('IPC Sections Classifier')
+
+    input_text = st.text_input('Enter the situation:', '')
+
+    if st.button('Classify'):
+        # Use CountVectorizer to convert the input text to numerical format
+        input_numerical = vectorizer.transform([input_text])
+
+        # Make a prediction using the trained model
+        prediction = model.predict(input_numerical.toarray())
+
+        # Get the indices of the top 3 predictions in descending order of probability
+        top_indices = np.argsort(prediction[0])[::-1][:3]
+
+        # Convert the top indices to class labels
+        top_labels = label_encoder.inverse_transform(top_indices)
+
+        st.write("Most probable punishment with IPC sections:")
+        for label in top_labels:
+            st.write(label)
 
 # Function for feature 3
 def feature_3():
@@ -91,13 +121,13 @@ def main():
     if authentication_status:
         authenticator.logout("Logout", "sidebar")
         st.sidebar.title(f"Legal Assistant | Welcome {name}")
-        selected_option = st.sidebar.radio("Select Option", ["Chatbot", "Feature 2", "Feature 3"])
+        selected_option = st.sidebar.radio("Select Option", ["Chatbot", "IPC Section Classifier", "Feature 3"])
 
         if selected_option == "Chatbot":
             chatbot_feature()
 
-        elif selected_option == "Feature 2":
-            feature_2()
+        elif selected_option == "IPC Section Classifier":
+            Classify()
 
         elif selected_option == "Feature 3":
             feature_3()
