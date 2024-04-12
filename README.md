@@ -12,4 +12,8 @@ pip install -r requirements.txt
 - Check if all are installed
 pip list
 
+- create the .env from template and add api key
 
+- Running the app:
+cd source
+streamlit run app.py
