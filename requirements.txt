@@ -7,4 +7,7 @@ python-dotenv
 google-generativeai
 
 scikit-learn
-sklearn
+
+python-docx
+PyPDF2
+langchain

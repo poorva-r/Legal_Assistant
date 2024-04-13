@@ -5,6 +5,29 @@ import pickle
 import numpy as np
 import google.generativeai as ggi
 import streamlit_authenticator as stauth
+from langchain.embeddings import GooglePalmEmbeddings
+from PyPDF2 import PdfReader
+import docx
+
+os.environ['GOOGLE_API_KEY'] = ""
+embeddings = GooglePalmEmbeddings()
+
+model = ggi.GenerativeModel('gemini-pro')
+chat = model.start_chat(history=[])
+
+def extract_text_from_pdf(file):
+    pdf_reader = PdfReader(file)
+    text = ""
+    for page in pdf_reader.pages:
+        text += page.extract_text()
+    return text
+
+def extract_text_from_docx(file):
+    doc = docx.Document(file)
+    text = ""
+    for paragraph in doc.paragraphs:
+        text += paragraph.text + "\n"
+    return text
 
 # Set up authentication
 names = ["Poorva", "Vishant", "Vidhi"]
@@ -13,7 +36,7 @@ file_path = "hashed_pw.pkl"  # Update this with the path to your hashed password
 with open(file_path, "rb") as file:
     hashed_passwords = pickle.load(file)
 
-authenticator = stauth.Authenticate(names, usernames, hashed_passwords, "Legal Assistant", "abcdf", cookie_expiry_days=0)
+authenticator = stauth.Authenticate(names, usernames, hashed_passwords, "Legal Assistant", "abcdf", cookie_expiry_days=1)
 
 # Load environment variables from .env file
 load_dotenv(".env")
@@ -121,7 +144,7 @@ def main():
     if authentication_status:
         authenticator.logout("Logout", "sidebar")
         st.sidebar.title(f"Legal Assistant | Welcome {name}")
-        selected_option = st.sidebar.radio("Select Option", ["Chatbot", "IPC Section Classifier", "Feature 3"])
+        selected_option = st.sidebar.radio("Select Option", ["Chatbot", "IPC Section Classifier", "Summarization - Upload File", "Summarization - Upload Text"])
 
         if selected_option == "Chatbot":
             chatbot_feature()
@@ -129,8 +152,37 @@ def main():
         elif selected_option == "IPC Section Classifier":
             Classify()
 
-        elif selected_option == "Feature 3":
-            feature_3()
+        elif selected_option == "Summarization - Upload File":
+                    # File upload
+            file = st.file_uploader("Upload a file", type=["pdf", "txt", "docx"])
+
+            if file:
+                # Display a spinner while processing
+                with st.spinner("Processing..."):
+                    # Read text from uploaded file
+                    file_extension = file.name.split(".")[-1]
+                    if file_extension == "pdf":
+                        text = extract_text_from_pdf(file)
+                    elif file_extension == "docx":
+                        text = extract_text_from_docx(file)
+                    else:
+                        text = file.read().decode("utf-8")
+
+                # Button to send uploaded text to model
+                    if st.button("Send Uploaded Text"):
+                        response = chat.send_message(text)
+                        st.markdown("Model: " + response.text)
+
+        elif selected_option == "Summarization - Upload Text":
+            # Text input for user query with larger text area
+            user_input = st.text_area("Enter the text you want to summarize :", "", height=400)
+
+            # Button to send user input
+            if st.button("Send Text"):
+                with st.spinner("Processing..."):
+                    response = chat.send_message(user_input)
+                    st.markdown("Model: " + response.text)
+
     else:
         # If authentication fails or user has not logged in yet, display appropriate messages
         if authentication_status == False:
