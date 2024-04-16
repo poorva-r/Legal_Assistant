@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Legal Chatbot</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: black;
+            color: #edf2f7;
+        }
+        .container {
+            max-width: 900px;
+            margin: 50px auto;
+            padding: 20px;
+            border: 1px solid #cbd5e0;
+            border-radius: 0.5rem;
+            background-color: #171717;
+        }
+        .message {
+            margin-bottom: 10px;
+        }
+        .user-message {
+            color: #48bb78;
+        }
+        .bot-message {
+            color: #3182ce;
+        }
+        input[type="text"] {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin-top: 10px;
+            border: 1px solid #4a5568;
+            border-radius: 0.25rem;
+            background-color: #3d3d3d;
+            color: white;
+            
+        }
+        .loader {
+            display: none;
+            margin: 20px auto;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #48bb78; /* Change color to match your design */
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="text-white text-4xl mb-12 text-center font-bold mt-12">Legal Chatbot</div>
+    <div class="container">
+        <div id="chat-container"></div>
+        <div id="loader" class="loader"></div>
+        <input type="text" id="user-input" placeholder="Ask me a legal question..." class="block w-full">
+
+    </div>
+
+    <script>
+        const chatContainer = document.getElementById('chat-container');
+        const userInput = document.getElementById('user-input');
+        const loader = document.getElementById('loader');
+
+        function appendMessage(role, content) {
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message', role + '-message');
+            messageDiv.textContent = content;
+            chatContainer.appendChild(messageDiv);
+        }
+
+        async function sendMessage() {
+            const userMessage = userInput.value.trim();
+            if (userMessage !== '') {
+                appendMessage('user', userMessage);
+                userInput.value = '';
+
+                // Show loader while waiting for response
+                loader.style.display = 'block';
+
+                try {
+                    const response = await fetch('/chatbot-query', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        },
+                        body: `message=${encodeURIComponent(userMessage)}`
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch response');
+                    }
+
+                    const data = await response.json();
+                    if (data && data.message) {
+                        appendMessage('bot', data.message);
+                    } else {
+                        throw new Error('Invalid response format');
+                    }
+              
+                } catch (error) {
+                    console.error('Error:', error);
+                    appendMessage('bot', 'Sorry, something went wrong.');
+                } finally {
+                    // Hide loader once response is received
+                    loader.style.display = 'none';
+                }
+            }
+        }
+
+        userInput.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    </script>
+    
+</body>
+</html>
