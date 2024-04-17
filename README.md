@@ -12,9 +12,7 @@ Steps:
   
 pip install -r requirements.txt
 
-- Check if all are installed
-  
-pip list
+- Check if all are installed: pip list
 
 - create the .env from template and add api key
 
