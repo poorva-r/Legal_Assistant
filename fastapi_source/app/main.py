@@ -12,7 +12,11 @@ import google.generativeai as ggi
 import markdown
 
 
+
 app = FastAPI()
+
+# Mount the directory containing static files
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
 templates = Jinja2Templates(directory="templates")
@@ -99,4 +103,27 @@ async def chatbot_message(request: Request, message: str = Form(...)):
         return {"message": response_text}
     except Exception as e:
         return {"error": str(e)}
+    
+
+# Define summarise page
+@app.get("/summarize", response_class=HTMLResponse)
+async def summarize_page(request: Request):
+    return templates.TemplateResponse("summarize_page.html", {"request": request})
+
+# Define casestudy page
+@app.get("/casestudy", response_class=HTMLResponse)
+async def casestudy_page(request: Request):
+    return templates.TemplateResponse("casestudy_page.html", {"request": request})
+
+# Define chat with pdf page
+@app.get("/chatwithpdf", response_class=HTMLResponse)
+async def chatwithpdf_page(request: Request):
+    return templates.TemplateResponse("chatwithpdf_page.html", {"request": request})
+
+# Define key info extraction page
+@app.get("/infoextraction", response_class=HTMLResponse)
+async def infoextraction_page(request: Request):
+    return templates.TemplateResponse("infoextraction_page.html", {"request": request})
+
+
 

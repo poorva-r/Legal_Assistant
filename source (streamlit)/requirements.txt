@@ -1,8 +1,6 @@
-fastapi uvicorn
-
-Jinja2
-
-python-multipart
+streamlit==1.29.0
+tensorflow==2.15.0
+streamlit-authenticator==0.1.5
 
 python-dotenv
 
@@ -11,7 +9,5 @@ google-generativeai
 scikit-learn
 
 python-docx
-
 PyPDF2
-
 langchain

@@ -1,12 +1,12 @@
+# Legal_Assistant
+
 Steps:
 
-- Create a venv:
-
-python -m venv venv
-
-- Activate venv:
-
-venv\Scripts\activate
+- Create venv and activate it
+  
+ python -m venv venv
+ 
+ venv\Scripts\activate
 
 - Run the requirements.txt file
   
@@ -18,8 +18,6 @@ pip install -r requirements.txt
 
 - Running the app:
 
-cd fastapi_source
+cd source
 
-cd app
-
-uvicorn main:app --reload
+streamlit run app.py
