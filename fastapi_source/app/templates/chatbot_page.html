@@ -25,7 +25,7 @@
             color: #48bb78;
         }
         .bot-message {
-            color: #3182ce;
+            color: white
         }
         input[type="text"] {
             width: calc(100% - 20px);
@@ -70,7 +70,15 @@
         function appendMessage(role, content) {
             const messageDiv = document.createElement('div');
             messageDiv.classList.add('message', role + '-message');
-            messageDiv.textContent = content;
+            // messageDiv.textContent = content;
+            // Replace \n with <br> for HTML line breaks
+            content = content.replace(/\n/g, '<br>');
+            // Replace **text** with <strong>text</strong> for bold
+            content = content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            // Replace *text* with <em>text</em> for italic
+            content = content.replace(/\*(.*?)\*/g, '<em>$1</em>');
+            // Use innerHTML to render HTML content
+            messageDiv.innerHTML = content;
             chatContainer.appendChild(messageDiv);
         }
 

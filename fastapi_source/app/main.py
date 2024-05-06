@@ -97,7 +97,9 @@ async def chatbot_message(request: Request, message: str = Form(...)):
         response = chat.send_message(message, stream=True)
 
         # Extract text from the response object and wrap lines
-        response_text = "\n".join([word.text for word in response])
+        response_text = "".join([word.text for word in response])
+
+        # plain_text_response = response_text.replace('**', '').replace('*', '')
 
         # Return the response
         return {"message": response_text}
