@@ -9,7 +9,7 @@ from langchain.embeddings import GooglePalmEmbeddings
 from PyPDF2 import PdfReader
 import docx
 
-os.environ['GOOGLE_API_KEY'] = "'AIzaSyDlq6BXL8gQsFHg8JVHWb38J4lOk_BHfnA'"
+os.environ['GOOGLE_API_KEY'] = ""
 embeddings = GooglePalmEmbeddings()
 
 model = ggi.GenerativeModel('gemini-pro')
