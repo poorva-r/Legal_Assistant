@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Case Study</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-black flex justify-center">
+    <div class="flex flex-col justify-center items-center">
+        <h1 class="text-white font-bold text-3xl mb-8 mt-20">Case Study Suggestions</h1>
+        <form action="/search" method="post" class="text-center">
+            <input type="text" id="input_text" name="input_text" placeholder="Enter the situation" class="w-80 bg-gray-800 text-white rounded-lg px-4 py-2 focus:outline-none focus:bg-gray-900"><br><br>
+            <button type="submit" class="px-8 py-2 text-white bg-blue-600 hover:bg-blue-700 rounded-md mt-2">Show Latest Relevant Case Studies</button>
+        </form>
+        <!-- {% if case_studies %}
+        <div class="mt-8 p-20 text-white">
+            <ul>
+                {% for case in case_studies %}
+                <li>{{ case }}</li>
+                <br>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %} -->
+        {% if case_studies %}
+    <div class="mt-8 p-20 text-white">
+        <ul>
+            {% for case in case_studies %}
+            <li>
+                <div>{{ case.title }}</div>
+                <div><a href="{{ case.link }}" style="color: rgb(78, 229, 243); text-decoration: underline;" target="_blank">{{ case.link }}</a></div>
+            </li>
+            <br>
+            {% endfor %}
+        </ul>
+    </div>
+{% endif %}
+    </div>
+
+</body>
+</html>

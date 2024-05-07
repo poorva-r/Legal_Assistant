@@ -13,6 +13,11 @@ from typing import List
 from langchain.embeddings import GooglePalmEmbeddings
 from PyPDF2 import PdfReader
 import docx
+import requests
+from bs4 import BeautifulSoup
+import nltk
+from nltk.tokenize import word_tokenize
+from nltk.corpus import stopwords
 
 
 
@@ -55,6 +60,8 @@ model = ggi.GenerativeModel("gemini-pro")
 # Start a chat session with the initialized model
 chat = model.start_chat()
 
+stop_words = set(stopwords.words('english'))
+
 def extract_text_from_pdf(file):
     pdf_reader = PdfReader(file)
     text = ""
@@ -68,6 +75,31 @@ def extract_text_from_docx(file):
     for paragraph in doc.paragraphs:
         text += paragraph.text + "\n"
     return text
+
+# Define function to extract keywords using NLTK
+def extract_keywords(text):
+    tokens = word_tokenize(text)
+    keywords = [token for token in tokens if token.isalnum() and token.lower() not in stop_words]
+    return keywords
+
+# Define function to search Indian Kanoon using BeautifulSoup
+def search_indian_kanoon(query):
+    url = "https://indiankanoon.org/search/?formInput=" + query.replace(" ", "+")
+    response = requests.get(url)
+    
+    if response.status_code == 200:
+        soup = BeautifulSoup(response.content, 'html.parser')
+        case_titles = soup.find_all(class_='result_title')
+        case_links = soup.find_all(class_='cite_tag')
+        
+        results = []
+        if case_titles and case_links:
+            for title, link in zip(case_titles, case_links):
+                case_url = "https://indiankanoon.org" + link.get('href')
+                results.append({"title": title.text, "link": case_url})
+        return results
+    else:
+        return None
 
 # Define landing page
 @app.get("/", response_class=HTMLResponse)
@@ -159,10 +191,26 @@ async def summarize(request: Request, file: UploadFile = File(None), user_input:
 async def casestudy_page(request: Request):
     return templates.TemplateResponse("casestudy_page.html", {"request": request})
 
-# Define chat with pdf page
-@app.get("/chatwithpdf", response_class=HTMLResponse)
-async def chatwithpdf_page(request: Request):
-    return templates.TemplateResponse("chatwithpdf_page.html", {"request": request})
+
+@app.post("/search")
+async def search(request: Request, input_text: str = Form(...)):
+    # Extract keywords from input text
+    keywords = extract_keywords(input_text)
+    
+    # Construct search query from keywords
+    search_query = '+'.join(keywords)
+    
+    # Search Indian Kanoon
+    case_studies = search_indian_kanoon(search_query)
+    
+    # Render the search results template with the case studies
+    return templates.TemplateResponse("casestudy_page.html", {"request": request, "case_studies": case_studies})
+    
+
+# # Define chat with pdf page
+# @app.get("/chatwithpdf", response_class=HTMLResponse)
+# async def chatwithpdf_page(request: Request):
+#     return templates.TemplateResponse("chatwithpdf_page.html", {"request": request})
 
 
 
