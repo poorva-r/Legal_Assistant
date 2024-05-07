@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, Form
+from fastapi import FastAPI, Request, Form, File, UploadFile
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
@@ -9,7 +9,10 @@ from sklearn.feature_extraction.text import CountVectorizer
 from fastapi import HTTPException
 from dotenv import load_dotenv
 import google.generativeai as ggi
-import markdown
+from typing import List
+from langchain.embeddings import GooglePalmEmbeddings
+from PyPDF2 import PdfReader
+import docx
 
 
 
@@ -39,17 +42,32 @@ with open(vectorizer_path, 'rb') as vectorizer_file:
 load_dotenv(".env")
 
 # Fetch API key from environment variables
+os.environ['GOOGLE_API_KEY'] = 'AIzaSyDlq6BXL8gQsFHg8JVHWb38J4lOk_BHfnA'
 fetched_api_key = os.getenv("API_KEY")
-print(fetched_api_key)
 
 # Configure the Gemini Pro API with the fetched API key
 ggi.configure(api_key=fetched_api_key)
 
+embeddings = GooglePalmEmbeddings()
 # Initialize the generative model (Gemini Pro)
 model = ggi.GenerativeModel("gemini-pro")
 
 # Start a chat session with the initialized model
 chat = model.start_chat()
+
+def extract_text_from_pdf(file):
+    pdf_reader = PdfReader(file)
+    text = ""
+    for page in pdf_reader.pages:
+        text += page.extract_text()
+    return text
+
+def extract_text_from_docx(file):
+    doc = docx.Document(file)
+    text = ""
+    for paragraph in doc.paragraphs:
+        text += paragraph.text + "\n"
+    return text
 
 # Define landing page
 @app.get("/", response_class=HTMLResponse)
@@ -77,7 +95,7 @@ async def classify(request: Request, input_text: str = Form(...)):
     # Prepare the output to display
     output = []
     for label in top_labels:
-        output.append(f"Description of {label}\n{label}")
+        output.append(f"{label}\n\n")
 
     # Render the classifier page with the predictions
     return templates.TemplateResponse("classifier_page.html", {"request": request, "predictions": output})
@@ -108,9 +126,33 @@ async def chatbot_message(request: Request, message: str = Form(...)):
     
 
 # Define summarise page
-@app.get("/summarize", response_class=HTMLResponse)
-async def summarize_page(request: Request):
+@app.get("/summarizer", response_class=HTMLResponse)
+async def summarizer_page(request: Request):
     return templates.TemplateResponse("summarize_page.html", {"request": request})
+
+@app.post("/summarize")
+async def summarize(request: Request, file: UploadFile = File(None), user_input: str = Form(None)):
+    if file is not None:
+        # Read text from uploaded file
+        file_extension = file.filename.split(".")[-1]
+        if file_extension == "pdf":
+            text = extract_text_from_pdf(file.file)
+        elif file_extension == "docx":
+            text = extract_text_from_docx(file.file)
+        else:
+            text = file.file.read().decode("utf-8")
+    elif user_input:
+        text = user_input
+    else:
+        return {"error": "No input provided"}
+
+    # Send text to model for summarization
+    response = chat.send_message(text)
+    response_text = response.text
+    plain_text_response = response_text.replace('**', '').replace('*', '')
+    # return {"summary": response.text}
+
+    return templates.TemplateResponse("summarize_page.html", {"request": request, "summary": plain_text_response})
 
 # Define casestudy page
 @app.get("/casestudy", response_class=HTMLResponse)
@@ -122,10 +164,6 @@ async def casestudy_page(request: Request):
 async def chatwithpdf_page(request: Request):
     return templates.TemplateResponse("chatwithpdf_page.html", {"request": request})
 
-# Define key info extraction page
-@app.get("/infoextraction", response_class=HTMLResponse)
-async def infoextraction_page(request: Request):
-    return templates.TemplateResponse("infoextraction_page.html", {"request": request})
 
 
 
