@@ -47,7 +47,7 @@ with open(vectorizer_path, 'rb') as vectorizer_file:
 load_dotenv(".env")
 
 # Fetch API key from environment variables
-os.environ['GOOGLE_API_KEY'] = 'AIzaSyDlq6BXL8gQsFHg8JVHWb38J4lOk_BHfnA'
+os.environ['GOOGLE_API_KEY'] = ''
 fetched_api_key = os.getenv("API_KEY")
 
 # Configure the Gemini Pro API with the fetched API key
